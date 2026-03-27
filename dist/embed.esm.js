@@ -1,4 +1,4 @@
-/* cocktailfyi-embed v1.1.0 | MIT | https://widget.cocktailfyi.com */
+/* cocktailfyi-embed v1.1.1 | MIT | https://widget.cocktailfyi.com */
 
 // src/styles/modern.ts
 function getModernCSS() {
@@ -1091,10 +1091,8 @@ function statsRow(stats) {
   ).join("");
   return `<div class="drinkfyi-stats-row">${items}</div>`;
 }
-function pills(items) {
-  if (!items.length) return "";
-  const tags = items.filter(Boolean).map((t) => `<span class="drinkfyi-pill">${esc(t.trim())}</span>`).join("");
-  return `<div class="drinkfyi-pills">${tags}</div>`;
+function sectionTitle(title) {
+  return `<div class="drinkfyi-section-label">${esc(title)}</div>`;
 }
 function viewLink(url, _domain, name) {
   return `
@@ -1107,25 +1105,46 @@ function viewLink(url, _domain, name) {
 
 // src/cards/cocktail-card.ts
 function renderCocktailCard(container, data, config, _lang) {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f, _g, _h;
   const name = String((_a = data.name) != null ? _a : "");
   const category = String((_b = data.category) != null ? _b : "");
   const glass = String((_c = data.glass) != null ? _c : "");
   const difficulty = String((_d = data.difficulty) != null ? _d : "");
   const prepTime = data.prep_time_minutes ? `${data.prep_time_minutes} min` : "";
-  const url = String((_e = data.url) != null ? _e : `https://${config.domain}/${config.entitySlug}/`);
+  const url = String((_e = data.url) != null ? _e : `/${config.entitySlug}/`);
+  const viewUrl = url.startsWith("http") ? url : `https://${config.domain}${url}`;
+  const ingredients = (_f = data.ingredients) != null ? _f : [];
+  const ingredientNames = ingredients.map((i) => {
+    const measure = i.measure ? `${i.measure} ` : "";
+    return `${measure}${esc(i.name)}`;
+  });
+  const abv = parseFloat(String((_g = data.abv) != null ? _g : "0"));
+  const calories = Number((_h = data.calories) != null ? _h : 0);
   const stats = [
+    abv > 0 ? { value: `${abv}%`, label: "ABV" } : null,
+    calories > 0 ? { value: String(calories), label: "Cal" } : null,
     prepTime ? { value: prepTime, label: "Prep" } : null,
-    difficulty ? { value: difficulty, label: "Difficulty" } : null,
-    glass ? { value: glass, label: "Glass" } : null
+    difficulty ? { value: difficulty, label: "Difficulty" } : null
   ].filter((s) => s !== null);
-  container.innerHTML = [
-    cardHeader(name, category),
-    statsRow(stats),
-    category ? pills([category]) : "",
-    viewLink(url, config.domain, config.name),
+  if (abv === 0 && calories === 0 && glass) {
+    stats.push({ value: glass, label: "Glass" });
+  }
+  const sections = [
+    cardHeader(name, `${category}${glass ? " \xB7 " + glass : ""}`)
+  ];
+  if (ingredientNames.length > 0) {
+    sections.push(
+      `<div class="drinkfyi-pills">${sectionTitle("Ingredients")}` + ingredientNames.map((n) => `<span class="drinkfyi-pill">${n}</span>`).join("") + `</div>`
+    );
+  }
+  if (stats.length > 0) {
+    sections.push(statsRow(stats));
+  }
+  sections.push(
+    viewLink(viewUrl, config.domain, config.name),
     poweredByHTML(config)
-  ].join("");
+  );
+  container.innerHTML = sections.join("");
 }
 
 // src/widgets/compare.ts
