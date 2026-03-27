@@ -1,4 +1,4 @@
-/* cocktailfyi-embed v1.1.1 | MIT | https://widget.cocktailfyi.com */
+/* cocktailfyi-embed v1.1.2 | MIT | https://widget.cocktailfyi.com */
 
 // src/styles/modern.ts
 function getModernCSS() {
@@ -204,6 +204,8 @@ function getModernCSS() {
 .drinkfyi-wine-info { font-size:11px; }
 .drinkfyi-wine-type { font-weight:600; }
 .drinkfyi-wine-detail { color:var(--muted); font-size:10px; }
+/* Mini flavor radar */
+.drinkfyi-radar { padding:10px 18px; text-align:center; border-bottom:1px solid var(--border); }
   `;
 }
 
@@ -1104,8 +1106,56 @@ function viewLink(url, _domain, name) {
 }
 
 // src/cards/cocktail-card.ts
+function flavorRadarSVG(fp, accent) {
+  const cx = 60, cy = 60, r = 45;
+  const axes = [
+    { label: "Sweet", value: fp.sweet, angle: -90 },
+    { label: "Sour", value: fp.sour, angle: 0 },
+    { label: "Bitter", value: fp.bitter, angle: 90 },
+    { label: "Strong", value: fp.strong, angle: 180 }
+  ];
+  const gridRings = [0.33, 0.66, 1].map((scale) => {
+    const pts = axes.map((a) => {
+      const rad = a.angle * Math.PI / 180;
+      return `${cx + r * scale * Math.cos(rad)},${cy + r * scale * Math.sin(rad)}`;
+    });
+    return `<polygon points="${pts.join(" ")}" fill="none" stroke="var(--border)" stroke-width="0.5"/>`;
+  }).join("");
+  const axisLines = axes.map((a) => {
+    const rad = a.angle * Math.PI / 180;
+    return `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(rad)}" y2="${cy + r * Math.sin(rad)}" stroke="var(--border)" stroke-width="0.5"/>`;
+  }).join("");
+  const dataPts = axes.map((a) => {
+    const rad = a.angle * Math.PI / 180;
+    const scale = a.value / 10;
+    return `${cx + r * scale * Math.cos(rad)},${cy + r * scale * Math.sin(rad)}`;
+  }).join(" ");
+  const labelOffset = 12;
+  const labels = axes.map((a) => {
+    const rad = a.angle * Math.PI / 180;
+    const lx = cx + (r + labelOffset) * Math.cos(rad);
+    const ly = cy + (r + labelOffset) * Math.sin(rad);
+    const anchor = a.angle === 0 ? "start" : a.angle === 180 ? "end" : "middle";
+    return `<text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="central" fill="var(--muted)" font-size="8" font-weight="500">${a.label}</text>`;
+  }).join("");
+  const dots = axes.map((a) => {
+    const rad = a.angle * Math.PI / 180;
+    const scale = a.value / 10;
+    return `<circle cx="${cx + r * scale * Math.cos(rad)}" cy="${cy + r * scale * Math.sin(rad)}" r="2.5" fill="${accent}"/>`;
+  }).join("");
+  return `
+    <div class="drinkfyi-radar">
+      <svg width="140" height="130" viewBox="-5 -5 130 130" style="display:block;margin:0 auto;">
+        ${gridRings}
+        ${axisLines}
+        <polygon points="${dataPts}" fill="${accent}" fill-opacity="0.15" stroke="${accent}" stroke-width="1.5"/>
+        ${dots}
+        ${labels}
+      </svg>
+    </div>`;
+}
 function renderCocktailCard(container, data, config, _lang) {
-  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
   const name = String((_a = data.name) != null ? _a : "");
   const category = String((_b = data.category) != null ? _b : "");
   const glass = String((_c = data.glass) != null ? _c : "");
@@ -1129,6 +1179,14 @@ function renderCocktailCard(container, data, config, _lang) {
   if (abv === 0 && calories === 0 && glass) {
     stats.push({ value: glass, label: "Glass" });
   }
+  const fp = (_i = data.flavor_profile) != null ? _i : {};
+  const flavorData = {
+    sweet: Number((_j = fp.sweet) != null ? _j : 0),
+    sour: Number((_k = fp.sour) != null ? _k : 0),
+    bitter: Number((_l = fp.bitter) != null ? _l : 0),
+    strong: Number((_m = fp.strong) != null ? _m : 0)
+  };
+  const hasFlavorData = flavorData.sweet + flavorData.sour + flavorData.bitter + flavorData.strong > 0;
   const sections = [
     cardHeader(name, `${category}${glass ? " \xB7 " + glass : ""}`)
   ];
@@ -1139,6 +1197,9 @@ function renderCocktailCard(container, data, config, _lang) {
   }
   if (stats.length > 0) {
     sections.push(statsRow(stats));
+  }
+  if (hasFlavorData) {
+    sections.push(flavorRadarSVG(flavorData, config.accent));
   }
   sections.push(
     viewLink(viewUrl, config.domain, config.name),
