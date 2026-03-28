@@ -45,7 +45,7 @@ That's it. The widget fetches data from the CocktailFYI API and renders with ful
 | `data-cocktailfyi` | recipe, compare, glossary, faq, guide, ingredient, pairing, search, [tools] | required | Widget type |
 | `data-slug` | e.g. "cocktails" | — | Entity slug from the CocktailFYI database |
 | `data-theme` | light, dark, sepia, auto | light | Visual theme (`auto` follows OS preference) |
-| `data-style` | modern, classic | modern | Widget design style |
+| `data-styleVariant` | modern, classic | modern | Widget design style |
 | `data-size` | default, compact, large | default | Widget size |
 | `data-placeholder` | any string | "Search Cocktails..." | Search box placeholder |
 
