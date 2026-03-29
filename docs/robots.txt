@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# CocktailFYI Embed Widget
+# Main site: https://cocktailfyi.com
+# Widget docs: https://widget.cocktailfyi.com
+# npm: https://www.npmjs.com/package/cocktailfyi-embed
